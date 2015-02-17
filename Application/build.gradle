@@ -1,21 +1,22 @@
-buildscript {
-    repositories {
-        mavenCentral()
-    }
-
-    dependencies {
-        classpath 'com.android.tools.build:gradle:1.0.0'
-    }
-}
-
 apply plugin: 'com.android.application'
-
+apply plugin: 'robolectric'
 
 dependencies {
 
-
     compile 'com.google.android.gms:play-services-wearable:6.5.+'
     compile 'com.android.support:support-v13:21.0.+'
+    compile 'com.google.code.findbugs:jsr305:3.0.0'
+
+    compile 'com.squareup.dagger:dagger:1.2.2'
+    provided 'com.squareup.dagger:dagger-compiler:1.2.2'
+
+    androidTestCompile 'org.mockito:mockito-core:1.9.5'
+    androidTestCompile 'com.google.dexmaker:dexmaker-mockito:1.2'
+    androidTestCompile 'org.robolectric:robolectric:2.4'
+    androidTestCompile('junit:junit-dep:4.11') {
+        exclude module: 'hamcrest-core'
+    }
+
     compile project(':Shared')
     wearApp project(':Wearable')
 }
@@ -52,9 +53,15 @@ android {
 
     }
 
+    packagingOptions {
+        exclude 'LICENSE.txt'
+    }
 }
 
-
+robolectric {
+    include '**/*Test.class'
+    exclude '**/espresso/**/*.class'
+}
 
 
 
