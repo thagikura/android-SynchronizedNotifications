@@ -16,7 +16,15 @@
 
 package com.example.android.wearable.synchronizednotifications;
 
-import static com.google.android.gms.wearable.PutDataRequest.WEAR_URI_SCHEME;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.wearable.DataApi;
+import com.google.android.gms.wearable.DataEvent;
+import com.google.android.gms.wearable.DataEventBuffer;
+import com.google.android.gms.wearable.WearableListenerService;
+
+import com.example.android.wearable.synchronizednotifications.common.Constants;
 
 import android.content.Intent;
 import android.net.Uri;
@@ -24,36 +32,38 @@ import android.os.Bundle;
 import android.support.v4.app.NotificationManagerCompat;
 import android.util.Log;
 
-import com.example.android.wearable.synchronizednotifications.common.Constants;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.wearable.DataApi;
-import com.google.android.gms.wearable.DataEvent;
-import com.google.android.gms.wearable.DataEventBuffer;
-import com.google.android.gms.wearable.PutDataMapRequest;
-import com.google.android.gms.wearable.Wearable;
-import com.google.android.gms.wearable.WearableListenerService;
+import javax.inject.Inject;
+import javax.inject.Named;
+
+import testability.DaggerInjector;
+import testability.android.support.v4.app.NotificationManagerCompatWrapper;
+
+import static com.google.android.gms.wearable.PutDataRequest.WEAR_URI_SCHEME;
 
 /**
  * A {@link com.google.android.gms.wearable.WearableListenerService} that is invoked when certain
  * notifications are dismissed from either the phone or watch.
  */
 public class DismissListener extends WearableListenerService
-        implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener,
-        ResultCallback<DataApi.DeleteDataItemsResult> {
+        implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
     private static final String TAG = "DismissListener";
-    private GoogleApiClient mGoogleApiClient;
+
+    @Inject @Named("WearableApiClient") GoogleApiClient mGoogleApiClient;
+    @Inject DataApi mDataApi;
+    @Inject NotificationManagerCompatWrapper mNotificationManagerCompatWrapper;
+
+    public DismissListener() {
+        super();
+        DaggerInjector.inject(this);
+    }
 
     @Override
     public void onCreate() {
         super.onCreate();
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .addApi(Wearable.API)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .build();
+        mGoogleApiClient.registerConnectionCallbacks(this);
+        mGoogleApiClient.registerConnectionFailedListener(this);
+
     }
 
     @Override
@@ -62,7 +72,7 @@ public class DismissListener extends WearableListenerService
             if (dataEvent.getType() == DataEvent.TYPE_DELETED) {
                 if (Constants.BOTH_PATH.equals(dataEvent.getDataItem().getUri().getPath())) {
                     // notification on the phone should be dismissed
-                    NotificationManagerCompat.from(this).cancel(Constants.BOTH_ID);
+                    mNotificationManagerCompatWrapper.from(this).cancel(Constants.BOTH_ID);
                 }
             }
         }
@@ -105,8 +115,17 @@ public class DismissListener extends WearableListenerService
         if (Log.isLoggable(TAG, Log.DEBUG)) {
             Log.d(TAG, "Deleting Uri: " + dataItemUri.toString());
         }
-        Wearable.DataApi.deleteDataItems(
-                mGoogleApiClient, dataItemUri).setResultCallback(this);
+        mDataApi.deleteDataItems(
+                mGoogleApiClient, dataItemUri)
+                .setResultCallback(new ResultCallback<DataApi.DeleteDataItemsResult>() {
+                    @Override
+                    public void onResult(DataApi.DeleteDataItemsResult deleteDataItemsResult) {
+                        if (!deleteDataItemsResult.getStatus().isSuccess()) {
+                            Log.e(TAG, "dismissWearableNotification(): failed to delete DataItem");
+                        }
+                        mGoogleApiClient.disconnect();
+                    }
+                });
     }
 
     @Override // ConnectionCallbacks
@@ -116,13 +135,5 @@ public class DismissListener extends WearableListenerService
     @Override // OnConnectionFailedListener
     public void onConnectionFailed(ConnectionResult connectionResult) {
         Log.e(TAG, "Failed to connect to the Google API client");
-    }
-
-    @Override // ResultCallback<DataApi.DeleteDataItemsResult>
-    public void onResult(DataApi.DeleteDataItemsResult deleteDataItemsResult) {
-        if (!deleteDataItemsResult.getStatus().isSuccess()) {
-            Log.e(TAG, "dismissWearableNotification(): failed to delete DataItem");
-        }
-        mGoogleApiClient.disconnect();
     }
 }
