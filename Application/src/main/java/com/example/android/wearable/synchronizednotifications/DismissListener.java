@@ -29,7 +29,6 @@ import com.example.android.wearable.synchronizednotifications.common.Constants;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.v4.app.NotificationManagerCompat;
 import android.util.Log;
 
 import javax.inject.Inject;
@@ -63,7 +62,6 @@ public class DismissListener extends WearableListenerService
         super.onCreate();
         mGoogleApiClient.registerConnectionCallbacks(this);
         mGoogleApiClient.registerConnectionFailedListener(this);
-
     }
 
     @Override
