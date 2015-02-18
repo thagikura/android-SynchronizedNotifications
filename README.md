@@ -1,6 +1,8 @@
 Android SynchronizedNotifications Sample
 ===================================
 
+This is a forked version of the [Android SynchronizedNotifications][4], in addition of which sample, changed the code structure to use [Dagger][5], [Mockito][6] and [Robolectric][7] to make the code more testable.
+
 A basic sample showing how to use simple or synchronized notifications.
 This allows users to dismiss events from either their phone or wearable device simultaneously.
 
@@ -46,6 +48,10 @@ Wearable.DataApi.putDataItem(mGoogleApiClient, request)
 [1]: http://developer.android.com/reference/com/google/android/gms/wearable/DataApi.html#putDataItem(com.google.android.gms.common.api.GoogleApiClient%2C%20com.google.android.gms.wearable.PutDataRequest)
 [2]: http://developer.android.com/reference/com/google/android/gms/wearable/DataItem.html
 [3]: https://developer.android.com/reference/com/google/android/gms/wearable/WearableListenerService.html
+[4]: https://github.com/googlesamples/android-SynchronizedNotifications
+[5]: https://github.com/square/dagger
+[6]: https://github.com/mockito/mockito
+[7]: http://robolectric.org/
 
 Pre-requisites
 --------------
