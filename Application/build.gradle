@@ -10,8 +10,8 @@ dependencies {
     compile 'com.squareup.dagger:dagger:1.2.2'
     provided 'com.squareup.dagger:dagger-compiler:1.2.2'
 
-    // mockito dependency needed to be this version of mockito instead of com.google.dexmaker:dexmaker-mockito
-    // It introduces an Exception http://www.acnenomor.com/4369354p1/mockito-dexmaker-on-android
+    // Needs to be this version of mockito instead of com.google.dexmaker:dexmaker-mockito
+    // Otherwise it introduces an Exception http://www.acnenomor.com/4369354p1/mockito-dexmaker-on-android
     androidTestCompile 'org.mockito:mockito-core:1.9.5'
     androidTestCompile 'com.google.dexmaker:dexmaker:1.2'
     androidTestCompile 'org.robolectric:robolectric:2.4'
