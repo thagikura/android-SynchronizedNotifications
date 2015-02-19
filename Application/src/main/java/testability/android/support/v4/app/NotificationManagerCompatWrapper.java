@@ -1,5 +1,6 @@
 package testability.android.support.v4.app;
 
+import android.app.Notification;
 import android.content.Context;
 import android.support.v4.app.NotificationManagerCompat;
 
@@ -23,5 +24,9 @@ public class NotificationManagerCompatWrapper {
 
     public void cancel(int id) {
         mDelegate.cancel(id);
+    }
+
+    public void notify(int id, Notification notification) {
+        mDelegate.notify(id, notification);
     }
 }

@@ -58,7 +58,7 @@ public class DismissListenerTest {
     private ArgumentCaptor<ResultCallback<DataApi.DeleteDataItemsResult>>
             mResultCallbackArgumentCaptor;
 
-    @InjectMocks DismissListener mDismissListener;
+    @InjectMocks private DismissListener mDismissListener;
 
     @Before
     public void setUp() {

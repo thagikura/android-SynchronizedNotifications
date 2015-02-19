@@ -16,6 +16,7 @@ import dagger.Provides;
         },
         injects = {
                 DismissListener.class,
+                MainActivity.class,
         }
 )
 public class SynchronizedNotificationModule {
@@ -26,8 +27,7 @@ public class SynchronizedNotificationModule {
         mApplication = application;
     }
 
-    @Provides
-    @Singleton
+    @Provides @Singleton
     public Application providesApplication() {
         return mApplication;
     }

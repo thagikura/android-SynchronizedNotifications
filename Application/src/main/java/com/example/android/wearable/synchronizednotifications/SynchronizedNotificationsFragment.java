@@ -16,33 +16,33 @@
 
 package com.example.android.wearable.synchronizednotifications;
 
-import android.app.PendingIntent;
-import android.content.Intent;
-import android.support.v4.app.Fragment;
-import android.app.Activity;
-import android.net.Uri;
-import android.os.Bundle;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.NotificationManagerCompat;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Toast;
-
-import com.example.android.wearable.synchronizednotifications.common.Constants;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.PutDataRequest;
-import com.google.android.gms.wearable.Wearable;
+import com.google.common.annotations.VisibleForTesting;
+
+import com.example.android.wearable.synchronizednotifications.common.Constants;
+
+import android.app.Notification;
+import android.app.PendingIntent;
+import android.content.Intent;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.MenuItem;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+
+import javax.inject.Inject;
+import javax.inject.Named;
+
+import testability.android.app.PendingIntentWrapper;
+import testability.android.support.v4.app.FragmentWrapper;
+import testability.android.support.v4.app.NotificationManagerCompatWrapper;
 
 
 /**
@@ -58,20 +58,21 @@ import java.util.Locale;
  * notification results in the dismissal of the other one.</li>
  * </ul>
  */
-public class SynchronizedNotificationsFragment extends Fragment
+public class SynchronizedNotificationsFragment extends FragmentWrapper
         implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
     private static final String TAG = "SynchronizedNotificationsFragment";
-    private GoogleApiClient mGoogleApiClient;
+
+    @Inject @Named("WearableApiClient") GoogleApiClient mGoogleApiClient;
+    @Inject NotificationManagerCompatWrapper mNotificationManagerCompatWrapper;
+    @Inject PendingIntentWrapper mPendingIntentWrapper;
+    @Inject DataApi mDataApi;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mGoogleApiClient = new GoogleApiClient.Builder(this.getActivity())
-                .addApi(Wearable.API)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .build();
+        mGoogleApiClient.registerConnectionCallbacks(this);
+        mGoogleApiClient.registerConnectionFailedListener(this);
         setHasOptionsMenu(true);
     }
 
@@ -99,35 +100,38 @@ public class SynchronizedNotificationsFragment extends Fragment
      * {@link android.app.PendingIntent} will be added to handle the dismissal of notification to
      * be able to remove the mirrored notification on the wearable.
      */
-    private void buildLocalOnlyNotification(String title, String content, int notificationId,
+    @VisibleForTesting
+    void buildLocalOnlyNotification(String title, String content, int notificationId,
                                             boolean withDismissal) {
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this.getActivity());
+        Notification.Builder builder = new Notification.Builder(this.getAttachedActivity());
         builder.setContentTitle(title)
                 .setContentText(content)
-                .setLocalOnly(true)
                 .setSmallIcon(R.drawable.ic_launcher);
 
         if (withDismissal) {
             Intent dismissIntent = new Intent(Constants.ACTION_DISMISS);
             dismissIntent.putExtra(Constants.KEY_NOTIFICATION_ID, Constants.BOTH_ID);
-            PendingIntent pendingIntent = PendingIntent
-                    .getService(this.getActivity(), 0, dismissIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+            PendingIntent pendingIntent = mPendingIntentWrapper
+                    .getService(this.getAttachedActivity(), 0, dismissIntent,
+                            PendingIntent.FLAG_UPDATE_CURRENT);
             builder.setDeleteIntent(pendingIntent);
         }
-        NotificationManagerCompat.from(this.getActivity()).notify(notificationId, builder.build());
+        mNotificationManagerCompatWrapper.from(this.getAttachedActivity())
+                .notify(notificationId, builder.build());
     }
 
     /**
      * Builds a DataItem that on the wearable will be interpreted as a request to show a
      * notification. The result will be a notification that only shows up on the wearable.
      */
-    private void buildWearableOnlyNotification(String title, String content, String path) {
+    @VisibleForTesting
+    void buildWearableOnlyNotification(String title, String content, String path) {
         if (mGoogleApiClient.isConnected()) {
             PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(path);
             putDataMapRequest.getDataMap().putString(Constants.KEY_CONTENT, content);
             putDataMapRequest.getDataMap().putString(Constants.KEY_TITLE, title);
             PutDataRequest request = putDataMapRequest.asPutDataRequest();
-            Wearable.DataApi.putDataItem(mGoogleApiClient, request)
+            mDataApi.putDataItem(mGoogleApiClient, request)
                     .setResultCallback(new ResultCallback<DataApi.DataItemResult>() {
                         @Override
                         public void onResult(DataApi.DataItemResult dataItemResult) {
@@ -152,7 +156,8 @@ public class SynchronizedNotificationsFragment extends Fragment
      * both sides, using WearableListenerService callbacks, and is interpreted on each side as a
      * request to dismiss the corresponding notification.
      */
-    private void buildMirroredNotifications(String phoneTitle, String watchTitle, String content) {
+    @VisibleForTesting
+    void buildMirroredNotifications(String phoneTitle, String watchTitle, String content) {
         if (mGoogleApiClient.isConnected()) {
             // Wearable notification
             buildWearableOnlyNotification(watchTitle, content, Constants.BOTH_PATH);

@@ -16,18 +16,22 @@
 
 package com.example.android.wearable.synchronizednotifications;
 
-import android.graphics.Color;
-import android.os.Bundle;
-import android.support.v4.app.FragmentTransaction;
-import android.text.Html;
-import android.widget.TextView;
-import android.view.Menu;
-
 import com.example.android.common.activities.SampleActivityBase;
 import com.example.android.common.logger.Log;
 import com.example.android.common.logger.LogFragment;
 import com.example.android.common.logger.LogWrapper;
 import com.example.android.common.logger.MessageOnlyLogFilter;
+
+import android.graphics.Color;
+import android.os.Bundle;
+import android.support.v4.app.FragmentTransaction;
+import android.text.Html;
+import android.view.Menu;
+import android.widget.TextView;
+
+import javax.inject.Inject;
+
+import testability.DaggerInjector;
 
 /**
  * A simple launcher activity containing a summary sample description
@@ -39,6 +43,13 @@ public class MainActivity extends SampleActivityBase {
 
     public static final String FRAGTAG = "SynchronizedNotificationsFragment";
 
+    @Inject SynchronizedNotificationsFragment mSynchronizedNotificationsFragment;
+
+    public MainActivity() {
+        super();
+        DaggerInjector.inject(this);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -47,8 +58,7 @@ public class MainActivity extends SampleActivityBase {
         sampleOutput.setText(Html.fromHtml(getString(R.string.intro_message)));
 
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-        SynchronizedNotificationsFragment fragment = new SynchronizedNotificationsFragment();
-        transaction.add(fragment, FRAGTAG);
+        transaction.add(mSynchronizedNotificationsFragment, FRAGTAG);
         transaction.commit();
     }
 
