@@ -6,6 +6,12 @@ This is a forked version of the [Android SynchronizedNotifications][4], in addit
 A basic sample showing how to use simple or synchronized notifications.
 This allows users to dismiss events from either their phone or wearable device simultaneously.
 
+Instruction to run the tests
+------------
+`./gradlew clean test`
+
+Note that the tests run on a JVM instead of some Android InstrumentationTests, so you don't need to run it as ./gradlew connectedCheck
+
 Introduction
 ------------
 
